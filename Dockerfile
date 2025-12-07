@@ -1,21 +1,21 @@
 FROM php:8.2-fpm
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    nginx \
-    zip unzip \
+# Install Nginx and PHP extensions
+RUN apt-get update && apt-get install -y nginx \
     && docker-php-ext-install pdo pdo_mysql
 
-# Copy project files
+# Remove default nginx site
+RUN rm -f /etc/nginx/sites-enabled/default
+
+# Copy your PHP application
 WORKDIR /var/www/html
 COPY . .
 
-# Configure Nginx
+# Copy custom Nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose the Render port
+# Render uses port 8080
 ENV PORT=8080
 EXPOSE 8080
 
-# Start Nginx + PHP-FPM
 CMD service nginx start && php-fpm
