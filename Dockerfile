@@ -1,9 +1,21 @@
-FROM php:8.2-apache
-RUN docker-php-ext-install pdo pdo_mysql
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/000-default.conf && \
-    sed -ri -e 's!<Directory /var/www/>!<Directory ${APACHE_DOCUMENT_ROOT}/>!g' /etc/apache2/apache2.conf && \
-    a2enmod rewrite
-COPY . /var/www/html/
-ENV APP_DEBUG=false
-EXPOSE 80
+FROM php:8.2-fpm
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    nginx \
+    zip unzip \
+    && docker-php-ext-install pdo pdo_mysql
+
+# Copy project files
+WORKDIR /var/www/html
+COPY . .
+
+# Configure Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose the Render port
+ENV PORT=8080
+EXPOSE 8080
+
+# Start Nginx + PHP-FPM
+CMD service nginx start && php-fpm
